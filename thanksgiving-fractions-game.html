@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanksgiving Math Game: Fractions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom game styles */
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0.5rem;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+      background: linear-gradient(135deg, #ff9a56 0%, #ff6b35 50%, #ffa07a 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow-y: auto;
+    }
+    * { box-sizing: border-box; }
+    
+    /* Optimized container for better screen fit */
+    .container {
+      width: 100%; 
+      max-width: 1100px;
+      padding: 0;
+      margin: 0.5rem auto;
+    }
+    
+    .welcome-screen, .game-screen, .question-modal {
+      background: #fff8e7;
+      border-radius: 20px;
+      padding: 1.5rem 1rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      border: 4px solid #d2691e;
+    }
+    
+    .welcome-screen h1 {
+      font-size: 2rem;
+      color: #d2691e;
+      margin: 0 0 1rem 0;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .welcome-screen p {
+      font-size: 1.1rem;
+      color: #8b4513;
+      margin: 0 0 1.5rem 0;
+      font-weight: 600;
+    }
+    
+    .start-btn, .play-again-btn, .close-modal-btn {
+      background: linear-gradient(135deg, #ff6b35 0%, #d2691e 100%);
+      color: white;
+      border: none;
+      padding: 1rem 2.5rem;
+      font-size: 1.1rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-weight: 700;
+      box-shadow: 0 6px 20px rgba(210, 105, 30, 0.4);
+      margin: 0.5rem;
+    }
+    
+    .start-btn:hover, .play-again-btn:hover, .close-modal-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(210, 105, 30, 0.5);
+    }
+    
+    .team-selection {
+      margin: 2rem 0;
+    }
+    
+    .team-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .team-btn {
+      background: linear-gradient(135deg, #ddd 0%, #bbb 100%);
+      color: #333;
+      border: 3px solid #999;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 700;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .team-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .team-btn.selected {
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    }
+    
+    .team-a-btn.selected {
+      background: linear-gradient(135deg, #ff6b35 0%, #d2691e 100%);
+      color: white;
+      border-color: #d2691e;
+    }
+    
+    .team-b-btn.selected {
+      background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+      color: white;
+      border-color: #654321;
+    }
+    
+    .game-screen { display: none; }
+    
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    
+    .game-title {
+      font-size: 1.4rem;
+      color: #d2691e;
+      margin: 0;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats {
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
+      font-size: 1rem;
+      color: #8b4513;
+      font-weight: 700;
+    }
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .team-a-score {
+      background: linear-gradient(135deg, #ffe4d6 0%, #ffd4c0 100%);
+      border: 2px solid #ff6b35;
+      font-weight: 800;
+    }
+    
+    .team-b-score {
+      background: linear-gradient(135deg, #f4e8dc 0%, #e8d5c4 100%);
+      border: 2px solid #8b4513;
+      font-weight: 800;
+    }
+    
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .card {
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, #ff9a56 0%, #ff6b35 100%);
+      border-radius: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s;
+      position: relative;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      border: 3px solid #d2691e;
+      min-height: 70px;
+    }
+    
+    .card:hover:not(.flipped):not(.matched) {
+      transform: scale(1.08) rotate(2deg);
+    }
+    
+    .card.flipped, .card.matched {
+      background: white;
+      border: 3px solid #ff6b35;
+    }
+    
+    .card.matched {
+      opacity: 0.8;
+      cursor: default;
+      animation: matchBounce 0.6s;
+    }
+    
+    @keyframes matchBounce {
+      0%, 100% { transform: scale(1); }
+      25% { transform: scale(1.15) rotate(-5deg); }
+      75% { transform: scale(1.15) rotate(5deg); }
+    }
+    
+    .card-back {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+    
+    /* Fraction card styling */
+    .card-front {
+      display: none !important;
+    }
+    
+    .card-front-math {
+      display: none;
+      font-size: 1rem; 
+      font-weight: 700;
+      padding: 0.4rem;
+      line-height: 1.2;
+      word-break: break-word;
+      text-align: center;
+      height: 100%;
+      width: 100%;
+      box-sizing: border-box;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .card.flipped .card-back, .card.matched .card-back {
+      display: none;
+    }
+    
+    .card.flipped .card-front-math, .card.matched .card-front-math {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Fraction visual styles */
+    .fraction-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    
+    .fraction-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 3px solid #333;
+      position: relative;
+      overflow: hidden;
+      background: white;
+    }
+    
+    .fraction-bar {
+      width: 80px;
+      height: 25px;
+      border: 3px solid #333;
+      display: flex;
+      position: relative;
+      background: white;
+    }
+    
+    .fraction-part {
+      background: #ff6b35;
+      border-right: 2px solid #333;
+    }
+    
+    .fraction-part:last-child {
+      border-right: none;
+    }
+
+    .completion-message {
+      display: none;
+      margin-top: 1rem;
+      text-align: center;
+    }
+    
+    .completion-message.show { display: block; }
+    
+    .completion-message h2 {
+      color: #d2691e;
+      font-size: 2rem;
+      margin: 0 0 1rem 0;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .completion-message p {
+      color: #8b4513;
+      font-size: 1.2rem;
+      margin: 0 0 1rem 0;
+      font-weight: 600;
+    }
+    
+    .question-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      max-width: 500px;
+      width: 90%;
+      animation: modalBounceIn 0.5s;
+    }
+    
+    @keyframes modalBounceIn {
+      0% { opacity: 0; transform: translate(-50%, -60%) scale(0.8); }
+      50% { transform: translate(-50%, -50%) scale(1.05); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+    
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(139, 69, 19, 0.7);
+      z-index: 999;
+    }
+    
+    .modal-overlay.show { display: block; }
+    .question-modal.show { display: block; }
+    
+    .question-modal h3 {
+      color: #d2691e;
+      font-size: 1.5rem;
+      margin: 0 0 1.5rem 0;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .question-text {
+      font-size: 1.1rem;
+      color: #8b4513;
+      margin: 0 0 2rem 0;
+      line-height: 1.6;
+      font-weight: 600;
+    }
+    
+    .leaves-decoration {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 2rem;
+      opacity: 0.3;
+    }
+    
+    .ad-placeholder { display: none; }
+    
+    /* Mobile phones */
+    @media (max-width: 499px) {
+      .game-board {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.4rem;
+      }
+      .stats {
+        flex-direction: column;
+        width: 100%;
+      }
+      .stat-item {
+        justify-content: center;
+      }
+      .card-front-math {
+        font-size: 0.75rem;
+      }
+      .fraction-circle {
+        width: 40px;
+        height: 40px;
+      }
+      .fraction-bar {
+        width: 50px;
+        height: 20px;
+      }
+    }
+
+    /* Small tablets and large phones */
+    @media (min-width: 500px) and (max-width: 767px) {
+      .game-board {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.5rem;
+      }
+      .card-front-math {
+        font-size: 0.85rem;
+      }
+      .fraction-circle {
+        width: 50px;
+        height: 50px;
+      }
+      .fraction-bar {
+        width: 65px;
+        height: 22px;
+      }
+    }
+
+    /* Tablets and up */
+    @media (min-width: 768px) {
+      .welcome-screen, .game-screen, .question-modal {
+        padding: 2.5rem 2rem;
+      }
+      
+      .welcome-screen h1 {
+        font-size: 2.5rem;
+      }
+      
+      .game-title {
+        font-size: 1.8rem;
+      }
+      
+      .stats {
+        font-size: 1.1rem;
+      }
+      
+      .game-board {
+        grid-template-columns: repeat(6, 1fr);
+      }
+      
+      .card-front-math {
+        font-size: 1.1rem;
+      }
+      
+      .card-back {
+        font-size: 2.5rem;
+      }
+    }
+    
+    /* Desktop optimization */
+    @media (min-width: 1024px) {
+      body {
+        padding: 1rem;
+      }
+      
+      .container {
+        max-width: 1100px;
+      }
+      
+      .game-board {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.7rem;
+        max-width: 100%;
+      }
+      
+      .card-front-math {
+        font-size: 1.2rem;
+      }
+      
+      .completion-message h2 {
+        font-size: 2rem;
+      }
+    }
+    
+    /* Large desktop screens */
+    @media (min-width: 1400px) {
+      .container {
+        max-width: 1200px;
+      }
+      
+      .game-board {
+        grid-template-columns: repeat(6, 1fr);
+        max-width: 100%;
+        gap: 0.8rem;
+      }
+      
+      .card-front-math {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+ </head>
+ <body>
+  <div class="container">
+   <div class="welcome-screen" id="welcomeScreen">
+    <div class="leaves-decoration">
+      🍂🍁
+    </div>
+    <h1 id="welcomeTitle">Pilgrim's Fraction Fun</h1>
+    <p id="welcomeSubtitle">Match fractions with their models and words!</p>
+    <div class="team-selection">
+      <h2 style="color: #d2691e; font-size: 1.5rem; margin-bottom: 1rem;">Choose Your Teams!</h2>
+      <div class="team-buttons">
+        <button class="team-btn team-a-btn" id="teamABtn">🍁 Team A 🍁</button>
+        <button class="team-btn team-b-btn" id="teamBBtn">🦃 Team B 🦃</button>
+      </div>
+    </div>
+    <button class="start-btn" id="startBtn">Start Game</button>
+   </div>
+   <div class="game-screen" id="gameScreen">
+    <div class="game-header">
+      <h2 class="game-title" id="gameTitle">Pilgrim's Fraction Fun</h2>
+      <div class="stats">
+        <div class="stat-item team-a-score"><span>🍁 Team A:</span> <span id="teamAScore">0</span></div>
+        <div class="stat-item team-b-score"><span>🦃 Team B:</span> <span id="teamBScore">0</span></div>
+        <div class="stat-item"><span>⏱️</span> <span id="timer">0:00</span></div>
+        <div class="stat-item"><span>🎯</span> <span id="moves">0 moves</span></div>
+      </div>
+    </div>
+    
+    <div class="ad-placeholder" id="adPlaceholder"></div>
+
+    <div class="game-board" id="gameBoard"></div>
+    <div class="completion-message" id="completionMessage">
+      <h2 id="winnerTitle">🎉 Fraction Master! 🥧</h2>
+      <p id="completionStats"></p>
+      <button class="play-again-btn" id="playAgainBtn">Play Again</button>
+    </div>
+   </div>
+  </div>
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="question-modal" id="questionModal">
+    <div class="leaves-decoration">
+    🍂🍁
+    </div>
+    <h3>🥧 Fraction Challenge! 🍂</h3>
+    <p class="question-text" id="questionText"></p>
+    <button class="close-modal-btn" id="closeModalBtn">Continue</button>
+  </div>
+  <script>
+    // --- GAME CONFIGURATION ---
+    // 9 pairs: fractions matched with visual models or word forms
+    const mathPairs = [
+      { 
+        q: '1/2', 
+        a: '<div class="fraction-visual"><div class="fraction-circle" style="background: linear-gradient(90deg, #ff6b35 50%, white 50%);"></div></div>',
+        type: 'visual'
+      },
+      { 
+        q: '1/3', 
+        a: 'one-third'
+      },
+      { 
+        q: '1/4', 
+        a: '<div class="fraction-visual"><div class="fraction-bar"><div class="fraction-part" style="flex: 1;"></div><div style="flex: 3; background: white;"></div></div></div>',
+        type: 'visual'
+      },
+      { 
+        q: '3/4', 
+        a: 'three-fourths'
+      },
+      { 
+        q: '2/3', 
+        a: '<div class="fraction-visual"><div class="fraction-bar"><div class="fraction-part" style="flex: 2;"></div><div style="flex: 1; background: white;"></div></div></div>',
+        type: 'visual'
+      },
+      { 
+        q: '1/6', 
+        a: 'one-sixth'
+      },
+      { 
+        q: '5/6', 
+        a: '<div class="fraction-visual"><div class="fraction-bar" style="display: grid; grid-template-columns: repeat(6, 1fr);"><div style="background: #ff6b35;"></div><div style="background: #ff6b35;"></div><div style="background: #ff6b35;"></div><div style="background: #ff6b35;"></div><div style="background: #ff6b35; border-right: 2px solid #333;"></div><div style="background: white;"></div></div></div>',
+        type: 'visual'
+      },
+      { 
+        q: '1/8', 
+        a: 'one-eighth'
+      },
+      { 
+        q: '3/8', 
+        a: '<div class="fraction-visual"><div class="fraction-circle" style="background: conic-gradient(#ff6b35 0deg 135deg, white 135deg 360deg);"></div></div>',
+        type: 'visual'
+      }
+    ];
+    
+    // Fraction riddles for the modal
+    const questions = [
+      "🥧 If you cut a pie into 4 equal pieces and eat 1, what fraction did you eat?",
+      "🥧 Which is bigger: 1/2 or 1/4?",
+      "🥧 If a pizza has 8 slices and you eat 2, what fraction did you eat?",
+      "🥧 What fraction means 'half'? (Hint: 1/___)",
+      "🥧 True or False: 2/4 is the same as 1/2?",
+      "🥧 If you have 3 out of 6 apples, what fraction do you have?",
+      "🥧 Which is smaller: 1/3 or 1/6?",
+      "🥧 What does the bottom number in a fraction tell you?",
+      "🥧 If you color 4 out of 8 squares, what fraction is colored?",
+      "🥧 What fraction is the same as saying 'one out of four'?",
+      "🥧 True or False: 3/4 is less than 1/2?",
+      "🥧 If a chocolate bar has 6 pieces and you eat 5, what fraction is left?",
+      "🥧 What's another way to say 2/2?",
+      "🥧 Which is bigger: 5/6 or 2/3?",
+      "🥧 If you divide something into thirds, how many equal parts are there?"
+    ];
+
+    let cards = [];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let moves = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let usedQuestions = new Set();
+    
+    // Team game variables
+    let currentTeam = 'A';
+    let teamAScore = 0;
+    let teamBScore = 0;
+    let teamASelected = false;
+    let teamBSelected = false;
+    
+    // --- CORE GAME LOGIC ---
+    
+    function selectTeam(team) {
+      if (team === 'A') {
+        teamASelected = !teamASelected;
+        document.getElementById('teamABtn').classList.toggle('selected', teamASelected);
+      } else {
+        teamBSelected = !teamBSelected;
+        document.getElementById('teamBBtn').classList.toggle('selected', teamBSelected);
+      }
+    }
+
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function initGame() {
+      const gameBoard = document.getElementById('gameBoard');
+      gameBoard.innerHTML = '';
+      
+      let gameCards = [];
+      mathPairs.forEach((pair, index) => {
+        gameCards.push({ id: (index * 2), value: pair.q, matchId: index, flipped: false, matched: false, isHTML: false });
+        gameCards.push({ id: (index * 2) + 1, value: pair.a, matchId: index, flipped: false, matched: false, isHTML: pair.type === 'visual' });
+      });
+
+      cards = shuffleArray(gameCards);
+
+      cards.forEach(card => {
+        const cardElement = document.createElement('div');
+        cardElement.className = 'card';
+        cardElement.dataset.id = card.id;
+        
+        if (card.isHTML) {
+          cardElement.innerHTML = `
+            <div class="card-back">🥧</div> 
+            <div class="card-front-math">${card.value}</div>
+          `;
+        } else {
+          cardElement.innerHTML = `
+            <div class="card-back">🥧</div> 
+            <div class="card-front-math">${card.value}</div>
+          `;
+        }
+        
+        cardElement.addEventListener('click', () => {
+          if (document.getElementById('gameBoard').classList.contains('disabled')) return;
+          flipCard(card.id);
+        });
+        gameBoard.appendChild(cardElement);
+      });
+
+      flippedCards = [];
+      matchedPairs = 0;
+      moves = 0;
+      currentTeam = 'A';
+      teamAScore = 0;
+      teamBScore = 0;
+      usedQuestions.clear();
+      updateMoves();
+      updateScores();
+      updateTurnIndicator();
+      
+      document.getElementById('completionMessage').classList.remove('show');
+
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
+      startTime = Date.now();
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function flipCard(cardId) {
+      const card = cards.find(c => c.id === cardId);
+      const cardElement = document.querySelector(`[data-id="${cardId}"]`);
+
+      if (card.matched || card.flipped || flippedCards.length === 2) {
+        return;
+      }
+
+      card.flipped = true;
+      cardElement.classList.add('flipped');
+      flippedCards.push(card);
+
+      if (flippedCards.length === 2) {
+        document.getElementById('gameBoard').classList.add('disabled');
+        moves++;
+        updateMoves();
+        setTimeout(checkMatch, 1000);
+      }
+    }
+
+    function checkMatch() {
+      const [card1, card2] = flippedCards;
+      const card1Element = document.querySelector(`[data-id="${card1.id}"]`);
+      const card2Element = document.querySelector(`[data-id="${card2.id}"]`);
+
+      // Check for a match using matchId
+      if (card1.matchId === card2.matchId) {
+        card1.matched = true;
+        card2.matched = true;
+        
+        setTimeout(() => {
+            card1Element.classList.add('matched');
+            card2Element.classList.add('matched');
+        }, 100); 
+
+        matchedPairs++;
+        
+        // Award point to current team
+        if (currentTeam === 'A') {
+          teamAScore++;
+        } else {
+          teamBScore++;
+        }
+        updateScores();
+        
+        showQuestion();
+
+        if (matchedPairs === mathPairs.length) {
+          setTimeout(endGame, 500);
+        }
+        // Current team gets another turn after a match
+      } else {
+        setTimeout(() => {
+            card1.flipped = false;
+            card2.flipped = false;
+            card1Element.classList.remove('flipped');
+            card2Element.classList.remove('flipped');
+        }, 500);
+        
+        // Switch teams after a miss
+        currentTeam = currentTeam === 'A' ? 'B' : 'A';
+        updateTurnIndicator();
+      }
+
+      setTimeout(() => {
+          flippedCards = [];
+          document.getElementById('gameBoard').classList.remove('disabled');
+      }, 1000);
+    }
+
+    function showQuestion() {
+      const availableQuestions = questions.filter((_, index) => !usedQuestions.has(index));
+      if (availableQuestions.length === 0) {
+        usedQuestions.clear(); 
+        return;
+      }
+      const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+      const questionTextContent = availableQuestions[randomIndex];
+      const questionIndex = questions.indexOf(questionTextContent);
+      if (questionIndex !== -1) {
+          usedQuestions.add(questionIndex);
+      }
+      
+      document.getElementById('questionText').textContent = questionTextContent;
+      document.getElementById('modalOverlay').classList.add('show');
+      document.getElementById('questionModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('show');
+      document.getElementById('questionModal').classList.remove('show');
+    }
+
+    function updateMoves() {
+      document.getElementById('moves').textContent = `${moves} move${moves !== 1 ? 's' : ''}`;
+    }
+    
+    function updateScores() {
+      document.getElementById('teamAScore').textContent = teamAScore;
+      document.getElementById('teamBScore').textContent = teamBScore;
+    }
+    
+    function updateTurnIndicator() {
+      const gameTitle = document.getElementById('gameTitle');
+      if (currentTeam === 'A') {
+        gameTitle.textContent = '🍁 Team A\'s Turn';
+        gameTitle.style.color = '#ff6b35';
+      } else {
+        gameTitle.textContent = '🦃 Team B\'s Turn';
+        gameTitle.style.color = '#8b4513';
+      }
+    }
+
+    function updateTimer() {
+      if (!startTime) return;
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
+      document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
+      
+      // Determine winner
+      let winnerText = '';
+      if (teamAScore > teamBScore) {
+        winnerText = '🍁 Team A Wins! 🍁';
+      } else if (teamBScore > teamAScore) {
+        winnerText = '🦃 Team B Wins! 🦃';
+      } else {
+        winnerText = "🎉 It's a Tie! 🎉";
+      }
+      
+      document.getElementById('winnerTitle').textContent = winnerText;
+      document.getElementById('completionStats').textContent = 
+        `Team A: ${teamAScore} points | Team B: ${teamBScore} points | Time: ${minutes}:${seconds.toString().padStart(2, '0')} | Moves: ${moves}`;
+      document.getElementById('completionMessage').classList.add('show');
+    }
+
+    function startGame() {
+      // Check if at least one team is selected
+      if (!teamASelected && !teamBSelected) {
+        alert('Please select at least one team before starting!');
+        return;
+      }
+      
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('gameScreen').style.display = 'block';
+      initGame();
+    }
+    
+    // Event Listeners
+    document.getElementById('teamABtn').addEventListener('click', () => selectTeam('A'));
+    document.getElementById('teamBBtn').addEventListener('click', () => selectTeam('B'));
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
+      document.getElementById('completionMessage').classList.remove('show');
+      initGame();
+    });
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('modalOverlay').addEventListener('click', closeModal);
+    window.onload = () => { updateTimer(); }
+  </script>
+ </body>
+</html>
